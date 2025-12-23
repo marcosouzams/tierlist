@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tier List - Ranqueamento de Candidatos{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts - Space Grotesk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.1/Sortable.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        accent: {
+                            50: '#fffbeb',
+                            100: '#fff4c6',
+                            200: '#ffe88a',
+                            300: '#ffd54d',
+                            400: '#ffc520',
+                            500: '#ffb000',
+                            600: '#e68a00',
+                            700: '#bf6202',
+                            800: '#9c4b08',
+                            900: '#7d3e09',
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Space Grotesk', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        * {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Lucide icons thin stroke */
+        svg.lucide {
+            stroke-width: 1.5;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-white text-gray-900">
+    
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40">
+        <div class="flex items-center justify-between px-6 py-4">
+            <!-- Logo -->
+            <a href="{% url 'processos_list' %}" class="flex items-center space-x-2">
+                <span class="text-xl font-bold text-black">TierList</span>
+            </a>
+            
+            <!-- User menu -->
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-black rounded-lg flex items-center justify-center">
+                    <span class="text-white text-sm font-semibold">AD</span>
+                </div>
+                <div class="hidden md:block">
+                    <p class="text-sm font-semibold text-black">Admin User</p>
+                    <p class="text-xs text-gray-500">Administrador</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="pt-[73px]">
+        <main class="p-8 bg-white">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

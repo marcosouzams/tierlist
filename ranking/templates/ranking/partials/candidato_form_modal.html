@@ -1,0 +1,93 @@
+<!-- Modal -->
+<div id="candidatoModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+    <div class="bg-white rounded-lg max-w-2xl w-full flex flex-col transition-all duration-300">
+        <div class="bg-white border-b-2 border-gray-200 p-6 flex items-center justify-between flex-shrink-0">
+            <h2 class="text-2xl font-bold text-black">Adicionar Candidato</h2>
+            <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+                <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+            </button>
+        </div>
+        
+        <form 
+            hx-post="{% url 'candidato_create' processo.id %}"
+            hx-target="#modalContainer"
+            hx-swap="innerHTML"
+            class="flex-1 px-6 py-6">
+            {% csrf_token %}
+            
+            {% if error %}
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm text-red-600">{{ error }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="space-y-5">
+                <div>
+                    <label for="nome" class="block text-sm font-semibold text-black mb-2">Nome Completo *</label>
+                    <input type="text" id="nome" name="nome" required 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition" 
+                           placeholder="Ex: João Silva">
+                </div>
+                
+                <div>
+                    <label for="email" class="block text-sm font-semibold text-black mb-2">E-mail *</label>
+                    <input type="email" id="email" name="email" required 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition" 
+                           placeholder="Ex: joao@exemplo.com">
+                </div>
+                
+                <div>
+                    <label for="telefone" class="block text-sm font-semibold text-black mb-2">Telefone</label>
+                    <input type="text" id="telefone" name="telefone" 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition" 
+                           placeholder="Ex: (11) 99999-9999">
+                </div>
+                
+                <div>
+                    <label for="linkedin" class="block text-sm font-semibold text-black mb-2">LinkedIn</label>
+                    <input type="url" id="linkedin" name="linkedin" 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition" 
+                           placeholder="Ex: https://linkedin.com/in/joaosilva">
+                </div>
+            </div>
+        </form>
+        
+        <div class="bg-white border-t-2 border-gray-200 p-6 flex items-center justify-end space-x-3 flex-shrink-0">
+            <button type="button" onclick="closeModal()" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                Cancelar
+            </button>
+            <button type="submit" form="candidatoForm" 
+                    onclick="document.querySelector('form[hx-post]').requestSubmit()"
+                    class="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition font-bold border-2 border-black">
+                Adicionar Candidato
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Bloquear scroll quando modal abre
+    document.body.style.overflow = 'hidden';
+    
+    function closeModal() {
+        const modal = document.getElementById('candidatoModal');
+        modal.classList.add('opacity-0');
+        setTimeout(() => {
+            document.getElementById('modalContainer').innerHTML = '';
+            document.body.style.overflow = 'auto'; // Restaurar scroll
+        }, 300);
+    }
+    
+    // Close on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+    
+    // Close on backdrop click
+    document.getElementById('candidatoModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    
+    // Initialize icons
+    lucide.createIcons();
+</script>

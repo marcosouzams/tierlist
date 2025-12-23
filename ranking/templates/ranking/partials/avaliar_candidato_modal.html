@@ -1,0 +1,272 @@
+<!-- Modal de Avaliação de Candidato -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" id="avaliacaoModal">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden my-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center">
+                    <span class="text-2xl font-bold text-white">{{ ranking.candidato.nome|slice:":1"|upper }}</span>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-black">{{ ranking.candidato.nome }}</h2>
+                    <p class="text-sm text-gray-600">{{ ranking.candidato.email }}</p>
+                    {% if ranking.tier %}
+                    <span class="inline-block mt-1 px-3 py-1 bg-black text-white text-xs font-bold rounded">
+                        Tier {{ ranking.tier }}
+                    </span>
+                    {% else %}
+                    <span class="inline-block mt-1 px-3 py-1 bg-gray-200 text-gray-700 text-xs font-bold rounded">
+                        Não Ranqueado
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <button 
+                onclick="document.getElementById('modalContainer').innerHTML = ''; document.body.style.overflow = 'auto';"
+                class="text-gray-400 hover:text-gray-600 transition">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 240px);">
+            
+            <!-- Informações do Candidato -->
+            <div class="mb-6 bg-gray-50 border-2 border-gray-200 rounded-lg p-4">
+                <h3 class="text-lg font-bold text-black mb-3 flex items-center gap-2">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    Informações do Candidato
+                </h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    {% if ranking.candidato.telefone %}
+                    <div>
+                        <span class="font-semibold text-gray-700">Telefone:</span>
+                        <p class="text-gray-600">{{ ranking.candidato.telefone }}</p>
+                    </div>
+                    {% endif %}
+                    {% if ranking.candidato.linkedin %}
+                    <div>
+                        <span class="font-semibold text-gray-700">LinkedIn:</span>
+                        <a href="{{ ranking.candidato.linkedin }}" target="_blank" class="text-blue-600 hover:underline break-all">
+                            {{ ranking.candidato.linkedin|truncatechars:40 }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if ranking.data_avaliacao %}
+                    <div>
+                        <span class="font-semibold text-gray-700">Data de Avaliação:</span>
+                        <p class="text-gray-600">{{ ranking.data_avaliacao|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Critérios de Avaliação -->
+            {% if criterios %}
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-black flex items-center gap-2">
+                        <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                        Avaliação por Critérios
+                    </h3>
+                    {% if media_ponderada %}
+                    <div class="bg-green-100 border-2 border-green-300 rounded-lg px-4 py-2">
+                        <span class="text-sm font-semibold text-green-800">Média Ponderada:</span>
+                        <span class="text-xl font-bold text-green-900 ml-2">{{ media_ponderada }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="space-y-3">
+                    {% for criterio in criterios %}
+                    <div class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-gray-300 transition">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h4 class="text-base font-bold text-black">{{ criterio.nome }}</h4>
+                                    <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
+                                        Peso: {{ criterio.peso }}
+                                    </span>
+                                </div>
+                                {% if criterio.descricao %}
+                                <p class="text-sm text-gray-600">{{ criterio.descricao }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Avaliação Existente (Modo Visualização) -->
+                        {% if criterio.avaliacao %}
+                        <div id="avaliacao-view-{{ criterio.id }}" class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl font-bold text-black">{{ criterio.avaliacao.nota }}</span>
+                                    <span class="text-sm text-gray-500">/10</span>
+                                </div>
+                                <button 
+                                    onclick="toggleEditMode({{ criterio.id }}, true)"
+                                    class="flex items-center gap-2 text-sm text-gray-700 hover:text-black transition font-medium">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                    <span>Editar</span>
+                                </button>
+                            </div>
+                            <div class="text-xs text-gray-500 mb-3">
+                                Atualizado em {{ criterio.avaliacao.atualizado_em|date:"d/m/Y H:i" }}
+                            </div>
+                            {% if criterio.avaliacao.anotacao %}
+                            <div class="border-t border-gray-200 pt-3">
+                                <p class="text-sm text-gray-700">{{ criterio.avaliacao.anotacao }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <!-- Sem Avaliação -->
+                        <div id="avaliacao-view-{{ criterio.id }}" class="border border-dashed border-gray-300 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-500">Ainda não avaliado</span>
+                                <button 
+                                    onclick="toggleEditMode({{ criterio.id }}, true)"
+                                    class="flex items-center gap-2 text-sm bg-black text-white px-3 py-2 rounded-lg hover:bg-gray-800 transition font-medium">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <span>Avaliar</span>
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Formulário de Avaliação (Modo Edição - Inicialmente Oculto) -->
+                        <div id="avaliacao-form-{{ criterio.id }}" class="hidden">
+                            <form 
+                                hx-post="{% url 'salvar_avaliacao' ranking.id criterio.id %}"
+                                hx-target="#modalContainer"
+                                hx-swap="innerHTML"
+                                class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+                                {% csrf_token %}
+                                
+                                <div class="grid grid-cols-1 gap-3">
+                                    <!-- Nota -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-black mb-2">
+                                            Nota (0 a 10) *
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name="nota" 
+                                            step="0.01"
+                                            min="0"
+                                            max="10"
+                                            value="{% if criterio.avaliacao %}{{ criterio.avaliacao.nota }}{% endif %}"
+                                            required
+                                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition"
+                                            placeholder="Ex: 8.5">
+                                    </div>
+
+                                    <!-- Anotação -->
+                                    <div>
+                                        <label class="block text-sm font-semibold text-black mb-2">
+                                            Comentários
+                                        </label>
+                                        <textarea 
+                                            name="anotacao" 
+                                            rows="2"
+                                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition resize-none"
+                                            placeholder="Observações sobre este critério...">{% if criterio.avaliacao %}{{ criterio.avaliacao.anotacao }}{% endif %}</textarea>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <button 
+                                        type="submit"
+                                        class="flex-1 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition font-medium flex items-center justify-center gap-2">
+                                        <i data-lucide="save" class="w-4 h-4"></i>
+                                        <span>Salvar</span>
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        onclick="toggleEditMode({{ criterio.id }}, false)"
+                                        class="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <!-- Sem Critérios -->
+            <div class="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="alert-circle" class="w-8 h-8 text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-black mb-1">Nenhum critério cadastrado</h3>
+                <p class="text-sm text-gray-600 mb-4">Adicione critérios ao processo para avaliar candidatos</p>
+                <button 
+                    hx-get="{% url 'criterios_list_modal' ranking.processo_seletivo.id %}"
+                    hx-target="#modalContainer"
+                    hx-swap="innerHTML"
+                    class="inline-flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition font-medium">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Gerenciar Critérios</span>
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Observações Gerais -->
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-black mb-3 flex items-center gap-2">
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                    Observações Gerais
+                </h3>
+                <form 
+                    hx-post="{% url 'salvar_observacoes' ranking.id %}"
+                    hx-target="#modalContainer"
+                    hx-swap="innerHTML">
+                    {% csrf_token %}
+                    <textarea 
+                        name="observacoes_gerais" 
+                        rows="4"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition resize-none mb-3"
+                        placeholder="Observações gerais sobre o candidato...">{{ ranking.observacoes_gerais }}</textarea>
+                    <button 
+                        type="submit"
+                        class="bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition font-medium">
+                        Salvar Observações
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+            <button 
+                onclick="document.getElementById('modalContainer').innerHTML = ''; document.body.style.overflow = 'auto';"
+                class="px-5 py-2 bg-white border-2 border-black text-black rounded-lg hover:bg-gray-50 transition font-medium">
+                Fechar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Bloquear scroll da página quando modal está aberto
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+    
+    // Função para alternar entre modo visualização e edição
+    function toggleEditMode(criterioId, showForm) {
+        const viewElement = document.getElementById('avaliacao-view-' + criterioId);
+        const formElement = document.getElementById('avaliacao-form-' + criterioId);
+        
+        if (showForm) {
+            viewElement.classList.add('hidden');
+            formElement.classList.remove('hidden');
+        } else {
+            viewElement.classList.remove('hidden');
+            formElement.classList.add('hidden');
+        }
+        
+        // Reinicializar ícones após mudança
+        lucide.createIcons();
+    }
+</script>

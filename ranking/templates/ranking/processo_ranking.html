@@ -1,0 +1,567 @@
+{% extends 'base/base.html' %}
+{% load ranking_filters %}
+
+{% block title %}{{ processo.titulo }} - Ranking - TierList{% endblock %}
+
+{% block content %}
+<div class="w-full px-4">
+    {% csrf_token %}
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-10">
+        <div>
+            <h1 class="text-4xl font-bold text-black mb-2">{{ processo.titulo }}</h1>
+            <p class="text-gray-600">{{ processo.vaga }}</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button 
+                hx-get="{% url 'criterios_list_modal' processo.id %}"
+                hx-target="#modalContainer"
+                hx-swap="innerHTML"
+                class="flex items-center space-x-2 bg-white text-black px-5 py-3 rounded-lg hover:bg-gray-50 transition font-medium border-2 border-black">
+                <i data-lucide="list-checks" class="w-5 h-5"></i>
+                <span>Gerenciar Critérios</span>
+            </button>
+            
+            <button 
+                hx-get="{% url 'candidato_create_form' processo.id %}"
+                hx-target="#modalContainer"
+                hx-swap="innerHTML"
+                class="flex items-center space-x-2 bg-black text-white px-5 py-3 rounded-lg hover:bg-gray-800 transition font-medium border border-black">
+                <i data-lucide="user-plus" class="w-5 h-5"></i>
+                <span>Adicionar Candidato</span>
+            </button>
+        </div>
+    </div>
+
+    {% if tem_candidatos %}
+    <!-- Tier List - Horizontal Layout -->
+    <div class="flex gap-3 overflow-x-auto pb-4 justify-center">
+        <!-- S Tier - Red/Pink -->
+        <div class="tier-column flex-shrink-0 w-64">
+            <div class="tier-header bg-red-400 rounded-t-lg p-4 text-center">
+                <span class="text-4xl font-bold text-white">S</span>
+            </div>
+            <div id="tier-S" class="tier-content min-h-[500px] bg-red-100 border-2 border-red-400 border-t-0 rounded-b-lg p-3 space-y-3" data-tier="S">
+                {% for ranking in rankings_por_tier.S %}
+                <div class="candidate-card bg-white rounded-lg p-3 border-2 border-black cursor-move hover:shadow-lg transition" 
+                     data-ranking-id="{{ ranking.id }}"
+                     onclick="event.stopPropagation();"
+                     hx-get="{% url 'avaliar_candidato_modal' ranking.id %}"
+                     hx-target="#modalContainer"
+                     hx-swap="innerHTML"
+                     hx-trigger="click[!event.target.closest('.sortable-drag')]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-bold text-white">{{ ranking.candidato.nome|slice:":1"|upper }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-black text-sm truncate">{{ ranking.candidato.nome }}</h3>
+                            <p class="text-xs text-gray-600 truncate">{{ ranking.candidato.email }}</p>
+                        </div>
+                    </div>
+                    {% if criterios %}
+                    <div class="flex gap-1.5 mt-2 justify-center flex-wrap">
+                        {% for criterio in criterios %}
+                            {% if ranking.avaliacoes_dict %}
+                                {% with nota=ranking.avaliacoes_dict|get_item:criterio.id %}
+                                    {% if nota %}
+                                        {% with percentual=nota|floatformat:0|mul_by_ten %}
+                                            {% if percentual >= 80 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-green-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% elif percentual >= 60 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% else %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-red-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- A Tier - Orange -->
+        <div class="tier-column flex-shrink-0 w-64">
+            <div class="tier-header bg-orange-400 rounded-t-lg p-4 text-center">
+                <span class="text-4xl font-bold text-white">A</span>
+            </div>
+            <div id="tier-A" class="tier-content min-h-[500px] bg-orange-100 border-2 border-orange-400 border-t-0 rounded-b-lg p-3 space-y-3" data-tier="A">
+                {% for ranking in rankings_por_tier.A %}
+                <div class="candidate-card bg-white rounded-lg p-3 border-2 border-black cursor-move hover:shadow-lg transition" 
+                     data-ranking-id="{{ ranking.id }}"
+                     hx-get="{% url 'avaliar_candidato_modal' ranking.id %}"
+                     hx-target="#modalContainer"
+                     hx-swap="innerHTML"
+                     hx-trigger="click[!event.target.closest('.sortable-drag')]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-bold text-white">{{ ranking.candidato.nome|slice:":1"|upper }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-black text-sm truncate">{{ ranking.candidato.nome }}</h3>
+                            <p class="text-xs text-gray-600 truncate">{{ ranking.candidato.email }}</p>
+                        </div>
+                    </div>
+                    {% if criterios %}
+                    <div class="flex gap-1.5 mt-2 justify-center flex-wrap">
+                        {% for criterio in criterios %}
+                            {% if ranking.avaliacoes_dict %}
+                                {% with nota=ranking.avaliacoes_dict|get_item:criterio.id %}
+                                    {% if nota %}
+                                        {% with percentual=nota|mul_by_ten %}
+                                            {% if percentual >= 80 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-green-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% elif percentual >= 60 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% else %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-red-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- B Tier - Yellow -->
+        <div class="tier-column flex-shrink-0 w-64">
+            <div class="tier-header bg-yellow-400 rounded-t-lg p-4 text-center">
+                <span class="text-4xl font-bold text-gray-800">B</span>
+            </div>
+            <div id="tier-B" class="tier-content min-h-[500px] bg-yellow-100 border-2 border-yellow-400 border-t-0 rounded-b-lg p-3 space-y-3" data-tier="B">
+                {% for ranking in rankings_por_tier.B %}
+                <div class="candidate-card bg-white rounded-lg p-3 border-2 border-black cursor-move hover:shadow-lg transition" 
+                     data-ranking-id="{{ ranking.id }}"
+                     hx-get="{% url 'avaliar_candidato_modal' ranking.id %}"
+                     hx-target="#modalContainer"
+                     hx-swap="innerHTML"
+                     hx-trigger="click[!event.target.closest('.sortable-drag')]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-bold text-white">{{ ranking.candidato.nome|slice:":1"|upper }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-black text-sm truncate">{{ ranking.candidato.nome }}</h3>
+                            <p class="text-xs text-gray-600 truncate">{{ ranking.candidato.email }}</p>
+                        </div>
+                    </div>
+                    {% if criterios %}
+                    <div class="flex gap-1.5 mt-2 justify-center flex-wrap">
+                        {% for criterio in criterios %}
+                            {% if ranking.avaliacoes_dict %}
+                                {% with nota=ranking.avaliacoes_dict|get_item:criterio.id %}
+                                    {% if nota %}
+                                        {% with percentual=nota|mul_by_ten %}
+                                            {% if percentual >= 80 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-green-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% elif percentual >= 60 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% else %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-red-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- C Tier - Yellow-Green -->
+        <div class="tier-column flex-shrink-0 w-64">
+            <div class="tier-header bg-lime-400 rounded-t-lg p-4 text-center">
+                <span class="text-4xl font-bold text-gray-800">C</span>
+            </div>
+            <div id="tier-C" class="tier-content min-h-[500px] bg-lime-100 border-2 border-lime-400 border-t-0 rounded-b-lg p-3 space-y-3" data-tier="C">
+                {% for ranking in rankings_por_tier.C %}
+                <div class="candidate-card bg-white rounded-lg p-3 border-2 border-black cursor-move hover:shadow-lg transition" 
+                     data-ranking-id="{{ ranking.id }}"
+                     hx-get="{% url 'avaliar_candidato_modal' ranking.id %}"
+                     hx-target="#modalContainer"
+                     hx-swap="innerHTML"
+                     hx-trigger="click[!event.target.closest('.sortable-drag')]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-bold text-white">{{ ranking.candidato.nome|slice:":1"|upper }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-black text-sm truncate">{{ ranking.candidato.nome }}</h3>
+                            <p class="text-xs text-gray-600 truncate">{{ ranking.candidato.email }}</p>
+                        </div>
+                    </div>
+                    {% if criterios %}
+                    <div class="flex gap-1.5 mt-2 justify-center flex-wrap">
+                        {% for criterio in criterios %}
+                            {% if ranking.avaliacoes_dict %}
+                                {% with nota=ranking.avaliacoes_dict|get_item:criterio.id %}
+                                    {% if nota %}
+                                        {% with percentual=nota|mul_by_ten %}
+                                            {% if percentual >= 80 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-green-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% elif percentual >= 60 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% else %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-red-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- D Tier - Light Green -->
+        <div class="tier-column flex-shrink-0 w-64">
+            <div class="tier-header bg-green-400 rounded-t-lg p-4 text-center">
+                <span class="text-4xl font-bold text-white">D</span>
+            </div>
+            <div id="tier-D" class="tier-content min-h-[500px] bg-green-100 border-2 border-green-400 border-t-0 rounded-b-lg p-3 space-y-3" data-tier="D">
+                {% for ranking in rankings_por_tier.D %}
+                <div class="candidate-card bg-white rounded-lg p-3 border-2 border-black cursor-move hover:shadow-lg transition" 
+                     data-ranking-id="{{ ranking.id }}"
+                     hx-get="{% url 'avaliar_candidato_modal' ranking.id %}"
+                     hx-target="#modalContainer"
+                     hx-swap="innerHTML"
+                     hx-trigger="click[!event.target.closest('.sortable-drag')]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-bold text-white">{{ ranking.candidato.nome|slice:":1"|upper }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-black text-sm truncate">{{ ranking.candidato.nome }}</h3>
+                            <p class="text-xs text-gray-600 truncate">{{ ranking.candidato.email }}</p>
+                        </div>
+                    </div>
+                    {% if criterios %}
+                    <div class="flex gap-1.5 mt-2 justify-center flex-wrap">
+                        {% for criterio in criterios %}
+                            {% if ranking.avaliacoes_dict %}
+                                {% with nota=ranking.avaliacoes_dict|get_item:criterio.id %}
+                                    {% if nota %}
+                                        {% with percentual=nota|mul_by_ten %}
+                                            {% if percentual >= 80 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-green-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% elif percentual >= 60 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% else %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-red-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- F Tier - Green -->
+        <div class="tier-column flex-shrink-0 w-64">
+            <div class="tier-header bg-emerald-500 rounded-t-lg p-4 text-center">
+                <span class="text-4xl font-bold text-white">F</span>
+            </div>
+            <div id="tier-F" class="tier-content min-h-[500px] bg-emerald-100 border-2 border-emerald-400 border-t-0 rounded-b-lg p-3 space-y-3" data-tier="F">
+                {% for ranking in rankings_por_tier.F %}
+                <div class="candidate-card bg-white rounded-lg p-3 border-2 border-black cursor-move hover:shadow-lg transition" 
+                     data-ranking-id="{{ ranking.id }}"
+                     hx-get="{% url 'avaliar_candidato_modal' ranking.id %}"
+                     hx-target="#modalContainer"
+                     hx-swap="innerHTML"
+                     hx-trigger="click[!event.target.closest('.sortable-drag')]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-bold text-white">{{ ranking.candidato.nome|slice:":1"|upper }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-black text-sm truncate">{{ ranking.candidato.nome }}</h3>
+                            <p class="text-xs text-gray-600 truncate">{{ ranking.candidato.email }}</p>
+                        </div>
+                    </div>
+                    {% if criterios %}
+                    <div class="flex gap-1.5 mt-2 justify-center flex-wrap">
+                        {% for criterio in criterios %}
+                            {% if ranking.avaliacoes_dict %}
+                                {% with nota=ranking.avaliacoes_dict|get_item:criterio.id %}
+                                    {% if nota %}
+                                        {% with percentual=nota|mul_by_ten %}
+                                            {% if percentual >= 80 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-green-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% elif percentual >= 60 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% else %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-red-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="border-2 border-dashed border-gray-200 rounded-lg p-16 text-center">
+        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="users" class="w-10 h-10 text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-bold text-black mb-2">Nenhum candidato adicionado</h3>
+        <p class="text-gray-600">Adicione candidatos para começar a ranquear</p>
+    </div>
+    {% endif %}
+    
+    <!-- Unranked - Candidatos não ranqueados (sempre visível para permitir drop) -->
+    {% if tem_candidatos %}
+    <div class="mt-8">
+        <h3 class="text-xl font-bold text-black mb-4">Candidatos Não Ranqueados</h3>
+        <div class="bg-white border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px]">
+            <div id="tier-unranked" class="flex gap-3 flex-wrap" data-tier="unranked">
+                {% for ranking in rankings_por_tier.unranked %}
+                <div class="candidate-card bg-white rounded-lg p-3 border-2 border-black cursor-move hover:shadow-lg transition w-56" 
+                     data-ranking-id="{{ ranking.id }}"
+                     hx-get="{% url 'avaliar_candidato_modal' ranking.id %}"
+                     hx-target="#modalContainer"
+                     hx-swap="innerHTML"
+                     hx-trigger="click[!event.target.closest('.sortable-drag')]">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-bold text-white">{{ ranking.candidato.nome|slice:":1"|upper }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-black text-sm truncate">{{ ranking.candidato.nome }}</h3>
+                            <p class="text-xs text-gray-600 truncate">{{ ranking.candidato.email }}</p>
+                        </div>
+                    </div>
+                    {% if criterios %}
+                    <div class="flex gap-1.5 mt-2 justify-center flex-wrap">
+                        {% for criterio in criterios %}
+                            {% if ranking.avaliacoes_dict %}
+                                {% with nota=ranking.avaliacoes_dict|get_item:criterio.id %}
+                                    {% if nota %}
+                                        {% with percentual=nota|mul_by_ten %}
+                                            {% if percentual >= 80 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-green-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% elif percentual >= 60 %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% else %}
+                                                <div class="w-2.5 h-2.5 rounded-full bg-red-500" title="{{ criterio.nome }}: {{ nota }}"></div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-gray-300" title="{{ criterio.nome }}: Não avaliado"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Container -->
+<div id="modalContainer"></div>
+
+<script>
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        lucide.createIcons();
+        
+        // Configuração padrão do SortableJS
+        const sortableConfig = {
+            group: 'tiers', // Allow drag between all tiers
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            fallbackOnBody: true,
+            swapThreshold: 0.65,
+            forceFallback: false,
+            
+            onStart: function(evt) {
+                evt.item.classList.add('dragging');
+            },
+            
+            onEnd: function(evt) {
+                evt.item.classList.remove('dragging');
+                
+                const rankingId = evt.item.dataset.rankingId;
+                const newTier = evt.to.dataset.tier;
+                const newOrder = evt.newIndex;
+                
+                // If dropped outside any valid container, move to unranked
+                if (!newTier) {
+                    const unrankedContainer = document.getElementById('tier-unranked');
+                    if (unrankedContainer) {
+                        unrankedContainer.appendChild(evt.item);
+                        updateRankingOnServer(rankingId, 'unranked', 0);
+                    }
+                    return;
+                }
+                
+                console.log('Drag ended:', { rankingId, newTier, newOrder });
+                updateRankingOnServer(rankingId, newTier, newOrder);
+            }
+        };
+        
+        // Initialize SortableJS for tier containers (vertical layout)
+        const tierContainers = document.querySelectorAll('.tier-content');
+        tierContainers.forEach(container => {
+            new Sortable(container, sortableConfig);
+        });
+        
+        // Initialize SortableJS for unranked container (horizontal layout)
+        const unrankedContainer = document.getElementById('tier-unranked');
+        if (unrankedContainer) {
+            new Sortable(unrankedContainer, {
+                ...sortableConfig,
+                // Unranked pode ter layout diferente mas usa o mesmo grupo
+            });
+        }
+    });
+    
+    function updateRankingOnServer(rankingId, tier, ordem) {
+        // Send update to server
+        fetch(`{% url 'update_ranking_tier' 0 %}`.replace('/0/', `/${rankingId}/`), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrftoken
+            },
+            body: `tier=${tier}&ordem=${ordem}`
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log('Ranking updated successfully');
+                return response.json();
+            } else {
+                console.error('Failed to update ranking:', response.status);
+                throw new Error('Failed to update ranking');
+            }
+        })
+        .then(data => {
+            console.log('Server response:', data);
+        })
+        .catch(error => {
+            console.error('Error updating ranking:', error);
+            // Show error message to user
+            alert('Erro ao atualizar o ranking. Por favor, recarregue a página.');
+        });
+    }
+    
+    // Reinitialize icons after HTMX swap
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        lucide.createIcons();
+        
+        // Se o modal foi fechado (container vazio), restaurar scroll
+        if (event.target.id === 'modalContainer' && !event.target.innerHTML.trim()) {
+            document.body.style.overflow = 'auto';
+        }
+    });
+</script>
+
+<style>
+    .candidate-card {
+        touch-action: none;
+    }
+    
+    .candidate-card.sortable-ghost {
+        opacity: 0.4;
+    }
+    
+    .candidate-card.sortable-chosen {
+        cursor: grabbing !important;
+    }
+    
+    .candidate-card.sortable-drag {
+        opacity: 1;
+        transform: rotate(3deg);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .candidate-card.dragging {
+        cursor: grabbing;
+    }
+    
+    /* Ensure cards maintain their structure when dragged */
+    .tier-content .candidate-card,
+    #tier-unranked .candidate-card {
+        box-sizing: border-box;
+    }
+</style>
+
+{% endblock %}

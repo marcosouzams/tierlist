@@ -1,0 +1,117 @@
+<!-- Formulário de Critério (Criar/Editar) -->
+<div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-5 mb-4">
+    <div class="flex items-center justify-between mb-4">
+        <h4 class="text-lg font-bold text-black">
+            {% if criterio %}Editar Critério{% else %}Novo Critério{% endif %}
+        </h4>
+        <button 
+            onclick="document.getElementById('criterioFormContainer').innerHTML = ''"
+            class="text-gray-400 hover:text-gray-600 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    {% if error %}
+    <div class="mb-4 bg-red-50 border-2 border-red-200 rounded-lg p-3">
+        <p class="text-sm text-red-700 font-medium">{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <form 
+        {% if criterio %}
+            hx-post="{% url 'criterio_update' criterio.id %}"
+        {% else %}
+            hx-post="{% url 'criterio_create' processo.id %}"
+        {% endif %}
+        hx-target="#modalContainer"
+        hx-swap="innerHTML"
+        class="space-y-4">
+        
+        {% csrf_token %}
+
+        <!-- Nome do Critério -->
+        <div>
+            <label for="nome" class="block text-sm font-semibold text-black mb-2">
+                Nome do Critério *
+            </label>
+            <input 
+                type="text" 
+                id="nome" 
+                name="nome" 
+                value="{% if criterio %}{{ criterio.nome }}{% endif %}"
+                required
+                placeholder="Ex: Comunicação, Técnica, Criatividade..."
+                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition">
+        </div>
+
+        <!-- Descrição -->
+        <div>
+            <label for="descricao" class="block text-sm font-semibold text-black mb-2">
+                Descrição
+            </label>
+            <textarea 
+                id="descricao" 
+                name="descricao" 
+                rows="3"
+                placeholder="Descreva o que será avaliado neste critério..."
+                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition resize-none">{% if criterio %}{{ criterio.descricao }}{% endif %}</textarea>
+        </div>
+
+        <!-- Peso e Ordem (Grid) -->
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Peso -->
+            <div>
+                <label for="peso" class="block text-sm font-semibold text-black mb-2">
+                    Peso *
+                </label>
+                <input 
+                    type="number" 
+                    id="peso" 
+                    name="peso" 
+                    step="0.01"
+                    min="0.01"
+                    max="10.00"
+                    value="{% if criterio %}{{ criterio.peso }}{% else %}1.00{% endif %}"
+                    required
+                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition">
+                <p class="text-xs text-gray-600 mt-1">Valor entre 0.01 e 10.00</p>
+            </div>
+
+            <!-- Ordem -->
+            <div>
+                <label for="ordem" class="block text-sm font-semibold text-black mb-2">
+                    Ordem *
+                </label>
+                <input 
+                    type="number" 
+                    id="ordem" 
+                    name="ordem" 
+                    min="0"
+                    value="{% if criterio %}{{ criterio.ordem }}{% else %}0{% endif %}"
+                    required
+                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition">
+                <p class="text-xs text-gray-600 mt-1">Ordem de exibição</p>
+            </div>
+        </div>
+
+        <!-- Botões -->
+        <div class="flex items-center gap-3 pt-2">
+            <button 
+                type="submit"
+                class="flex items-center space-x-2 bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition font-medium">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>{% if criterio %}Atualizar{% else %}Criar{% endif %}</span>
+            </button>
+            <button 
+                type="button"
+                onclick="document.getElementById('criterioFormContainer').innerHTML = ''"
+                class="px-5 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                Cancelar
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    lucide.createIcons();
+</script>

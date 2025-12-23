@@ -1,0 +1,160 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Processos Seletivos - TierList{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-10">
+        <div>
+            <h1 class="text-4xl font-bold text-black mb-2">Processos Seletivos</h1>
+            <p class="text-gray-600">Gerencie todos os processos de recrutamento</p>
+        </div>
+        <button onclick="openModal()" class="flex items-center space-x-2 bg-black text-white px-5 py-3 rounded-lg hover:bg-gray-800 transition font-medium border-2 border-black">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            <span>Novo Processo</span>
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex items-center space-x-3 mb-8">
+        <button class="px-4 py-2 bg-black text-white text-sm rounded-lg font-medium">Todos</button>
+        <button class="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition font-medium">Abertos</button>
+        <button class="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition font-medium">Em Andamento</button>
+        <button class="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition font-medium">Finalizados</button>
+    </div>
+
+    <!-- Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for processo in processos %}
+                <!-- Processo Card -->
+        <a href="{% url 'processo_ranking' processo.id %}" class="block bg-white rounded-lg border border-gray-300 hover:border-gray-900 transition p-6 cursor-pointer">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-black mb-1">{{ processo.titulo }}</h3>
+                    <p class="text-sm text-gray-600">{{ processo.vaga }}</p>
+                </div>
+                <span class="px-3 py-1 bg-{{ processo.status }}-bg text-{{ processo.status }}-text text-xs font-bold rounded-lg border-2 border-black">
+                    {{ processo.get_status_display }}
+                </span>
+            </div>
+            
+            <div class="space-y-2 mb-4">
+                {% if processo.departamento %}
+                <div class="flex items-center text-sm text-gray-600">
+                    <i data-lucide="building" class="w-4 h-4 mr-2"></i>
+                    <span>{{ processo.departamento }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="flex items-center text-sm text-gray-600">
+                    <i data-lucide="calendar" class="w-4 h-4 mr-2"></i>
+                    <span>{{ processo.data_inicio|date:"d/m/Y" }}</span>
+                    {% if processo.data_fim %}
+                        <span class="mx-2">→</span>
+                        <span>{{ processo.data_fim|date:"d/m/Y" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t-2 border-gray-200">
+                <div class="flex items-center space-x-4">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-black">{{ processo.total_candidatos }}</p>
+                        <p class="text-xs text-gray-500">Candidatos</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-black">{{ processo.total_criterios }}</p>
+                        <p class="text-xs text-gray-500">Critérios</p>
+                    </div>
+                </div>
+                
+                <button onclick="event.preventDefault(); event.stopPropagation();" class="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <i data-lucide="more-vertical" class="w-5 h-5 text-gray-500"></i>
+                </button>
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-full border-2 border-dashed border-gray-200 rounded-lg p-16 text-center">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"><i data-lucide="briefcase" class="w-10 h-10 text-gray-400"></i></div>
+            <h3 class="text-xl font-bold text-black mb-2">Nenhum processo encontrado</h3>
+            <p class="text-gray-600 mb-8">Comece criando seu primeiro processo seletivo</p>
+            <button onclick="openModal()" class="inline-flex items-center space-x-2 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition font-medium border-2 border-black"><i data-lucide="plus" class="w-5 h-5"></i><span>Criar Processo</span></button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="createModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-opacity duration-300 opacity-0">
+    <div id="modalContent" class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col transition-all duration-300 scale-95 opacity-0">
+        <div class="bg-white border-b-2 border-gray-200 p-6 flex items-center justify-between flex-shrink-0">
+            <h2 class="text-2xl font-bold text-black">Novo Processo Seletivo</h2>
+            <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg transition"><i data-lucide="x" class="w-5 h-5 text-gray-500"></i></button>
+        </div>
+        <div class="overflow-y-auto flex-1 px-6 py-6 scrollbar-hidden">
+        <form method="POST" action="{% url 'processos_create' %}" id="createProcessoForm">
+            {% csrf_token %}
+            <div class="space-y-5">
+                <div><label for="titulo" class="block text-sm font-semibold text-black mb-2">Título do Processo *</label><input type="text" id="titulo" name="titulo" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition" placeholder="Ex: Processo Seletivo 2024"></div>
+                <div><label for="vaga" class="block text-sm font-semibold text-black mb-2">Nome da Vaga *</label><input type="text" id="vaga" name="vaga" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition" placeholder="Ex: Desenvolvedor Full Stack"></div>
+                <div><label for="departamento" class="block text-sm font-semibold text-black mb-2">Departamento</label><input type="text" id="departamento" name="departamento" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition" placeholder="Ex: Tecnologia"></div>
+                <div><label for="descricao" class="block text-sm font-semibold text-black mb-2">Descrição *</label><textarea id="descricao" name="descricao" required rows="4" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition resize-none" placeholder="Descreva o processo seletivo..."></textarea></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label for="data_inicio" class="block text-sm font-semibold text-black mb-2">Data de Início *</label><input type="date" id="data_inicio" name="data_inicio" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition"></div>
+                    <div><label for="data_fim" class="block text-sm font-semibold text-black mb-2">Data de Fim</label><input type="date" id="data_fim" name="data_fim" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition"></div>
+                </div>
+                <div><label for="status" class="block text-sm font-semibold text-black mb-2">Status</label><select id="status" name="status" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black outline-none transition"><option value="aberto">Aberto</option><option value="em_andamento">Em Andamento</option><option value="finalizado">Finalizado</option><option value="cancelado">Cancelado</option></select></div>
+            </div>
+        </form>
+        </div>
+        <div class="bg-white border-t-2 border-gray-200 p-6 flex items-center justify-end space-x-3 flex-shrink-0">
+            <button type="button" onclick="closeModal()" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">Cancelar</button>
+            <button type="submit" form="createProcessoForm" class="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition font-bold border-2 border-black">Criar Processo</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .scrollbar-hidden {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+    }
+    .scrollbar-hidden::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+    }
+</style>
+
+<script>
+function openModal(){
+    const modal = document.getElementById('createModal');
+    const modalContent = document.getElementById('modalContent');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow='hidden';
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modalContent.classList.remove('scale-95', 'opacity-0');
+        modalContent.classList.add('scale-100', 'opacity-100');
+    }, 10);
+    setTimeout(()=>lucide.createIcons(),100);
+}
+
+function closeModal(){
+    const modal = document.getElementById('createModal');
+    const modalContent = document.getElementById('modalContent');
+    modal.classList.add('opacity-0');
+    modalContent.classList.add('scale-95', 'opacity-0');
+    modalContent.classList.remove('scale-100', 'opacity-100');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow='auto';
+    }, 300);
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+document.getElementById('createModal')?.addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.addEventListener('DOMContentLoaded',function(){lucide.createIcons();});
+</script>
+{% endblock %}
