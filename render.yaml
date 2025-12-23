@@ -1,0 +1,28 @@
+services:
+  # Web Service (Django)
+  - type: web
+    name: tierlist
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn tierlist.wsgi:application"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tierlist-db
+          property: connectionString
+
+  # PostgreSQL Database
+  - type: pserv
+    name: tierlist-db
+    runtime: postgresql
+    plan: free
+    ipAllowList: []

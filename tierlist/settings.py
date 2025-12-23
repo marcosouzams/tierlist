@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6zs(vs+x*dt=0c1ak39s_g3how^e^w187*29ag#xet=k4no(b('
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-6zs(vs+x*dt=0c1ak39s_g3how^e^w187*29ag#xet=k4no(b(')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=Csv())
 
 
 # Application definition
@@ -43,6 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise para servir arquivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -74,16 +78,30 @@ WSGI_APPLICATION = 'tierlist.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'tierlist',
-        'USER': 'marco_ps',
-        'PASSWORD': '3231+tom',
-        'HOST': 'localhost',
-        'PORT': '5432',
+# Configuração do banco de dados
+# Em produção, usa DATABASE_URL fornecida pelo Render
+# Em desenvolvimento local, usa as configurações individuais do .env
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': config('DB_ENGINE', default='django.db.backends.postgresql'),
+            'NAME': config('DB_NAME', default='tierlist'),
+            'USER': config('DB_USER', default='marco_ps'),
+            'PASSWORD': config('DB_PASSWORD', default='3231+tom'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 
 # Password validation
@@ -125,6 +143,16 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# Configuração do WhiteNoise para arquivos estáticos
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Media files (User uploads)
 MEDIA_URL = 'media/'
