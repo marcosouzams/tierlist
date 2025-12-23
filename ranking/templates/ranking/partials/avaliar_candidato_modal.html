@@ -33,31 +33,142 @@
             
             <!-- Informações do Candidato -->
             <div class="mb-6 bg-gray-50 border-2 border-gray-200 rounded-lg p-4">
-                <h3 class="text-lg font-bold text-black mb-3 flex items-center gap-2">
-                    <i data-lucide="user" class="w-5 h-5"></i>
-                    Informações do Candidato
-                </h3>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    {% if ranking.candidato.telefone %}
-                    <div>
-                        <span class="font-semibold text-gray-700">Telefone:</span>
-                        <p class="text-gray-600">{{ ranking.candidato.telefone }}</p>
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-lg font-bold text-black flex items-center gap-2">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                        Informações do Candidato
+                    </h3>
+                    <button 
+                        onclick="toggleCandidateEditMode({{ ranking.candidato.id }}, true)"
+                        id="editCandidateBtn-{{ ranking.candidato.id }}"
+                        class="flex items-center gap-2 text-sm text-gray-700 hover:text-black transition font-medium px-3 py-1 hover:bg-gray-100 rounded-lg">
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                        <span>Editar Dados</span>
+                    </button>
+                </div>
+                
+                <!-- View Mode -->
+                <div id="candidateView-{{ ranking.candidato.id }}">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="font-semibold text-gray-700">Nome:</span>
+                            <p class="text-gray-600">{{ ranking.candidato.nome }}</p>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-700">E-mail:</span>
+                            <p class="text-gray-600">{{ ranking.candidato.email }}</p>
+                        </div>
+                        {% if ranking.candidato.telefone %}
+                        <div>
+                            <span class="font-semibold text-gray-700">Telefone:</span>
+                            <p class="text-gray-600">{{ ranking.candidato.telefone }}</p>
+                        </div>
+                        {% else %}
+                        <div>
+                            <span class="font-semibold text-gray-700">Telefone:</span>
+                            <p class="text-gray-400 italic">Não informado</p>
+                        </div>
+                        {% endif %}
+                        {% if ranking.candidato.linkedin %}
+                        <div>
+                            <span class="font-semibold text-gray-700">LinkedIn:</span>
+                            <a href="{{ ranking.candidato.linkedin }}" target="_blank" class="text-blue-600 hover:underline break-all">
+                                {{ ranking.candidato.linkedin|truncatechars:40 }}
+                            </a>
+                        </div>
+                        {% else %}
+                        <div>
+                            <span class="font-semibold text-gray-700">LinkedIn:</span>
+                            <p class="text-gray-400 italic">Não informado</p>
+                        </div>
+                        {% endif %}
+                        {% if ranking.data_avaliacao %}
+                        <div>
+                            <span class="font-semibold text-gray-700">Data de Avaliação:</span>
+                            <p class="text-gray-600">{{ ranking.data_avaliacao|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                    {% if ranking.candidato.linkedin %}
-                    <div>
-                        <span class="font-semibold text-gray-700">LinkedIn:</span>
-                        <a href="{{ ranking.candidato.linkedin }}" target="_blank" class="text-blue-600 hover:underline break-all">
-                            {{ ranking.candidato.linkedin|truncatechars:40 }}
-                        </a>
-                    </div>
-                    {% endif %}
-                    {% if ranking.data_avaliacao %}
-                    <div>
-                        <span class="font-semibold text-gray-700">Data de Avaliação:</span>
-                        <p class="text-gray-600">{{ ranking.data_avaliacao|date:"d/m/Y H:i" }}</p>
-                    </div>
-                    {% endif %}
+                </div>
+                
+                <!-- Edit Mode -->
+                <div id="candidateEdit-{{ ranking.candidato.id }}" class="hidden">
+                    <form 
+                        hx-post="{% url 'candidato_update' ranking.candidato.id %}"
+                        hx-target="#modalContainer"
+                        hx-swap="innerHTML"
+                        class="space-y-4">
+                        {% csrf_token %}
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-black mb-2">
+                                    Nome Completo *
+                                </label>
+                                <input 
+                                    type="text" 
+                                    name="nome" 
+                                    value="{{ ranking.candidato.nome }}"
+                                    required
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition"
+                                    placeholder="Nome completo do candidato">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-black mb-2">
+                                    E-mail *
+                                </label>
+                                <input 
+                                    type="email" 
+                                    name="email" 
+                                    value="{{ ranking.candidato.email }}"
+                                    required
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition"
+                                    placeholder="email@exemplo.com">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-black mb-2">
+                                    Telefone
+                                </label>
+                                <input 
+                                    type="tel" 
+                                    name="telefone" 
+                                    value="{{ ranking.candidato.telefone }}"
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition"
+                                    placeholder="+5511999999999">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-black mb-2">
+                                    LinkedIn
+                                </label>
+                                <input 
+                                    type="url" 
+                                    name="linkedin" 
+                                    value="{{ ranking.candidato.linkedin }}"
+                                    class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition"
+                                    placeholder="https://linkedin.com/in/...">
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="ranking_id" value="{{ ranking.id }}">
+                        
+                        <div class="flex items-center gap-2 pt-2">
+                            <button 
+                                type="submit"
+                                class="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition font-medium">
+                                <i data-lucide="save" class="w-4 h-4"></i>
+                                <span>Salvar Alterações</span>
+                            </button>
+                            <button 
+                                type="button"
+                                onclick="toggleCandidateEditMode({{ ranking.candidato.id }}, false)"
+                                class="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -252,6 +363,26 @@
     // Bloquear scroll da página quando modal está aberto
     document.body.style.overflow = 'hidden';
     lucide.createIcons();
+    
+    // Função para alternar entre modo visualização e edição de candidato
+    function toggleCandidateEditMode(candidatoId, showForm) {
+        const viewElement = document.getElementById('candidateView-' + candidatoId);
+        const editElement = document.getElementById('candidateEdit-' + candidatoId);
+        const editBtn = document.getElementById('editCandidateBtn-' + candidatoId);
+        
+        if (showForm) {
+            viewElement.classList.add('hidden');
+            editElement.classList.remove('hidden');
+            editBtn.classList.add('hidden');
+        } else {
+            viewElement.classList.remove('hidden');
+            editElement.classList.add('hidden');
+            editBtn.classList.remove('hidden');
+        }
+        
+        // Reinicializar ícones após mudança
+        lucide.createIcons();
+    }
     
     // Função para alternar entre modo visualização e edição
     function toggleEditMode(criterioId, showForm) {

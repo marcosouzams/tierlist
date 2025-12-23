@@ -179,6 +179,47 @@ def candidato_create(request, processo_id):
     return redirect('processo_ranking', processo_id=processo_id)
 
 
+def candidato_update(request, candidato_id):
+    """View HTMX para atualizar informações do candidato"""
+    
+    if request.method == 'POST':
+        candidato = get_object_or_404(Candidato, id=candidato_id)
+        
+        try:
+            # Atualizar informações do candidato
+            candidato.nome = request.POST.get('nome', '').strip()
+            candidato.email = request.POST.get('email', '').strip()
+            candidato.telefone = request.POST.get('telefone', '').strip() or None
+            candidato.linkedin = request.POST.get('linkedin', '').strip() or None
+            
+            # Validação básica
+            if not candidato.nome:
+                raise ValueError("Nome é obrigatório")
+            if not candidato.email:
+                raise ValueError("E-mail é obrigatório")
+            
+            candidato.save()
+            
+            # Obter o ranking_id da requisição para retornar ao modal correto
+            ranking_id = request.POST.get('ranking_id')
+            if ranking_id:
+                return avaliar_candidato_modal(request, int(ranking_id))
+            
+            # Se não tiver ranking_id, retornar resposta vazia
+            return render(request, 'ranking/partials/close_modal.html')
+            
+        except Exception as e:
+            # Em caso de erro, obter o ranking_id e retornar ao modal
+            ranking_id = request.POST.get('ranking_id')
+            if ranking_id:
+                return avaliar_candidato_modal(request, int(ranking_id))
+            
+            return render(request, 'ranking/partials/close_modal.html')
+    
+    from django.http import HttpResponse
+    return HttpResponse('Method not allowed', status=405)
+
+
 def update_ranking_tier(request, ranking_id):
     """View para atualizar tier e ordem do ranking"""
     

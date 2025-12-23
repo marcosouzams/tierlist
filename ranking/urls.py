@@ -7,6 +7,7 @@ urlpatterns = [
     path('processos/<int:processo_id>/ranking/', views.processo_ranking, name='processo_ranking'),
     path('processos/<int:processo_id>/candidato/create-form/', views.candidato_create_form, name='candidato_create_form'),
     path('processos/<int:processo_id>/candidato/create/', views.candidato_create, name='candidato_create'),
+    path('candidato/<int:candidato_id>/update/', views.candidato_update, name='candidato_update'),
     path('ranking/<int:ranking_id>/update-tier/', views.update_ranking_tier, name='update_ranking_tier'),
     
     # URLs de Critérios
