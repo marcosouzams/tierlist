@@ -28,7 +28,14 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-6zs(vs+x*dt=0c1ak39s_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=Csv())
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+
+# Origens confiáveis para CSRF (Django 4+ exige esquema https:// em POSTs)
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://*.onrender.com',
+    cast=Csv()
+)
 
 
 # Application definition
@@ -51,6 +58,8 @@ MIDDLEWARE = [
 # WhiteNoise apenas em produção
 if not DEBUG:
     MIDDLEWARE.append('whitenoise.middleware.WhiteNoiseMiddleware')
+    # Render encerra o TLS no proxy; sem isso o Django acha que a request e http
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 MIDDLEWARE += [
     'django.contrib.sessions.middleware.SessionMiddleware',
