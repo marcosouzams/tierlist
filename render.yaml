@@ -1,3 +1,10 @@
+databases:
+  # PostgreSQL Database
+  - name: tierlist-db
+    databaseName: tierlist
+    user: tierlist
+    plan: free
+
 services:
   # Web Service (Django)
   - type: web
@@ -19,10 +26,3 @@ services:
         fromDatabase:
           name: tierlist-db
           property: connectionString
-
-  # PostgreSQL Database
-  - type: pserv
-    name: tierlist-db
-    runtime: postgresql
-    plan: free
-    ipAllowList: []
